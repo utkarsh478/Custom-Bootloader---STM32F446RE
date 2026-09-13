@@ -1,0 +1,9 @@
+../Src/proto.c:20:13:handle_erase	4
+../Src/proto.c:46:13:handle_write	5
+../Src/proto.c:81:13:handle_verify	5
+../Src/proto.c:117:9:proto_recv_frame	7
+../Src/proto.c:163:6:proto_send_frame	3
+../Src/proto.c:192:6:proto_send_ack	1
+../Src/proto.c:197:6:proto_send_nak	1
+../Src/proto.c:202:13:handle_get_info	1
+../Src/proto.c:214:6:proto_handle	6

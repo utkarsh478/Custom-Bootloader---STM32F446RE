@@ -1,0 +1,8 @@
+../Src/flash.c:13:16:flash_wait_busy	3
+../Src/flash.c:23:13:flash_clear_errors	1
+../Src/flash.c:27:16:flash_check_errors	2
+../Src/flash.c:37:13:flash_flush_caches	1
+../Src/flash.c:50:6:flash_unlock	2
+../Src/flash.c:57:6:flash_lock	1
+../Src/flash.c:62:9:flash_erase_sector	5
+../Src/flash.c:101:9:flash_write	12

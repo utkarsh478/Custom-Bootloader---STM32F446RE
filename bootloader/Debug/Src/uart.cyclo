@@ -1,0 +1,7 @@
+../Src/uart.c:19:6:uart_init	1
+../Src/uart.c:47:6:uart_send_byte	2
+../Src/uart.c:52:6:uart_send	2
+../Src/uart.c:58:6:uart_send_str	2
+../Src/uart.c:65:9:uart_recv_ready	2
+../Src/uart.c:70:9:uart_recv_byte	2
+../Src/uart.c:76:9:uart_recv_byte_to	4

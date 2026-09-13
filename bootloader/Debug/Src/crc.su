@@ -1,0 +1,5 @@
+../Src/crc.c:12:6:crc32_init	4	static
+../Src/crc.c:17:6:crc32_reset	4	static
+../Src/crc.c:22:6:crc32_update	32	static
+../Src/crc.c:48:10:crc32_value	4	static
+../Src/crc.c:53:10:crc32_compute	16	static

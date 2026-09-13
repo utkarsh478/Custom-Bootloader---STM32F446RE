@@ -19,11 +19,21 @@
 #include "stm32f446xx.h"
 #include <stdio.h>
 #include <stdint.h>
+#include "flash.h"
+#include "uart.h"
+#include "proto.h"
+#include "crc.h"
 
 #define APP_BASE    0x08020000UL
 #define SRAM_START  0x20000000UL
 #define SRAM_END    0x20020000UL
+#define TEST_ADDR   0x08040000UL
+#define TEST_SECTOR 6U
 
+#define MAGIC_LEN   4U
+#define MAGIC_ACK   0x79U
+
+static const uint8_t magic[MAGIC_LEN] = { 0xA5U, 0x5AU, 0xB0U, 0x07U };
 
 static void delay_ms(uint32_t ms){
 	for(uint32_t i = 0;i < ms*1600; i++){
@@ -37,20 +47,20 @@ static void init_led(){
 	GPIOA->MODER |= (1U << 10);
 }
 
-static void Gpio_on(){
+static void led_on(){
 	GPIOA->BSRR |= (1U << 5);
 }
 
-static void Gpio_off(){
+static void led_off(){
 	GPIOA->BSRR |= ((1U << 5)<<16);
 }
 
 static void no_app_forever(){
 	while(1){
-		Gpio_on();
+		led_on();
 		delay_ms(80);
 
-		Gpio_off();
+		led_off();
 		delay_ms(80);
 	}
 }
@@ -81,36 +91,73 @@ __attribute__((naked)) void jump_to_app(uint32_t app_sp , uint32_t app_pc){
 	);
 }
 
+static uint8_t app_valid(void)
+{
+    uint32_t sp = *(volatile uint32_t *)APP_BASE;
+    return (sp >= SRAM_START && sp <= SRAM_END) ? 1U : 0U;
+}
+
+/* Listen for the magic sequence. Returns 1 if seen inside the window. */
+static uint8_t wait_for_magic(uint32_t window)
+{
+    uint8_t idx = 0U;
+    uint8_t b;
+
+    while (window-- > 0U) {
+        if (uart_recv_byte_to(&b, 2000U) != UART_OK) {
+            continue;
+        }
+
+        if (b == magic[idx]) {
+            idx++;
+            if (idx == MAGIC_LEN) {
+                return 1U;
+            }
+        } else {
+            idx = (b == magic[0]) ? 1U : 0U;
+        }
+    }
+
+    return 0U;
+}
+
+static void update_mode(void)
+{
+    uart_send_byte(MAGIC_ACK);
+
+    while (1) {
+        led_on();
+        proto_handle();
+        led_off();
+    }
+}
+
+
 int main(void){
 
-	uint32_t app_sp, app_pc;
+    uint32_t app_sp, app_pc;
 
-	init_led();
+    init_led();
+    uart_init();
+    crc32_init();
 
-	Gpio_on();
-	delay_ms(1000);
+    if (wait_for_magic(5000U)) {
+           update_mode();
+       }
 
+    if (!app_valid()) {
+    	no_app_forever();
+    }
 
-	Gpio_off();
-	delay_ms(1000);
+    app_sp = *(volatile uint32_t *)APP_BASE;
+    app_pc = *(volatile uint32_t *)(APP_BASE + 4U);
 
-	app_sp = *(volatile uint32_t *)APP_BASE;
+    deinit();
+    SCB->VTOR = APP_BASE;
+    __enable_irq();
+    jump_to_app(app_sp, app_pc);
 
-	if(app_sp < SRAM_START ||  app_sp > SRAM_END){
-		no_app_forever();
-	}
-
-	app_pc =*(volatile uint32_t *)(APP_BASE + 4U);
-
-	deinit();
-
-	SCB->VTOR = APP_BASE;
-	__enable_irq();
-
-	jump_to_app(app_sp,app_pc);
-
-	while(1){}
-
+    while (1) {}
 
 }
 
